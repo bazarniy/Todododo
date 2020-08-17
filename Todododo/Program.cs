@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using Todododo.ViewModels;
 using Microsoft.AspNetCore.Components.WebAssembly.Hosting;
 using Microsoft.Extensions.DependencyInjection;
+using Blazored.LocalStorage;
 
 namespace Todododo
 {
@@ -16,6 +17,8 @@ namespace Todododo
 
             builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             builder.Services.AddSingleton<FetchDataViewModel>();
+
+            builder.Services.AddBlazoredLocalStorage();
 
             await builder.Build().RunAsync();
         }
