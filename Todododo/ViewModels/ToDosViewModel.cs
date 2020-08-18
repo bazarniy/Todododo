@@ -1,31 +1,27 @@
-﻿using System.Reactive;
+﻿using System.Collections.ObjectModel;
+using System.Reactive;
 using System.Threading.Tasks;
 using ReactiveUI;
+using Todododo.Data;
 
 namespace Todododo.ViewModels
 {
     public class ToDosViewModel : ReactiveObject
     {
-        private int _currentCount;
+        public ReadOnlyObservableCollection<ToDoViewModel> Data { get; }
 
-        private readonly ObservableAsPropertyHelper<int> _count;
+        public ReactiveCommand<Unit, Unit> Add { get; }
 
         public ToDosViewModel()
         {
-            Increment = ReactiveCommand.CreateFromTask(IncrementCount);
+            var collection = new ObservableCollection<ToDoViewModel>(new[]
+            {
+                new ToDoViewModel(new ToDo(){Summary="First todo"}),
+                new ToDoViewModel(new ToDo(){Summary="Second todo", Completed=true})
+            });
+            Data = new ReadOnlyObservableCollection<ToDoViewModel>(collection);
 
-            _count = Increment.ToProperty(this, x => x.CurrentCount, scheduler: RxApp.MainThreadScheduler);
-        }
-
-        public int CurrentCount => _count.Value;
-        
-        
-        public ReactiveCommand<Unit, int> Increment { get; }
-
-        private Task<int> IncrementCount()
-        {
-            _currentCount++;
-            return Task.FromResult(_currentCount);
+            Add = ReactiveCommand.Create(() => collection.Add(new ToDoViewModel(new ToDo() { Summary = "Added todo" })));
         }
     }
 }

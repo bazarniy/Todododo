@@ -2,8 +2,18 @@
 
 @inherits ToDosViewBase;
 
-<h1>Counter</h1>
+<h1>ToDos</h1>
 
-<p>Current count: @ViewModel.CurrentCount</p>
+<Table Narrow="true">
+    <TableBody>
+        @foreach (var result in ViewModel.Data)
+        {
+        <TableRow>
+            <TableRowCell><Check TValue="bool" @bind-Checked="@result.Completed">@result.Summary</Check></TableRowCell>
+</TableRow>
+        }
+</TableBody>
+</Table>
 
-<button class="btn btn-primary" @onclick="IncrementCount">Click me</button>
+<Button Clicked="@Add" Color="Color.Success" Outline="true">+ Add task</Button>
+

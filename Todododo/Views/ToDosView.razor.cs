@@ -12,9 +12,9 @@ namespace Todododo.Views
             ViewModel = new ToDosViewModel();
         }
 
-        protected async Task IncrementCount()
+        protected async Task Add()
         {
-            await ViewModel.Increment.Execute().ToTask();
+            await ViewModel.Add.Execute().ToTask();
         }
     }
 }
