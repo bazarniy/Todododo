@@ -1,15 +1,16 @@
-﻿using ReactiveUI.Blazor;
+﻿using Microsoft.AspNetCore.Components;
+using ReactiveUI.Blazor;
 using System.Reactive.Threading.Tasks;
 using System.Threading.Tasks;
 using Todododo.ViewModels;
 
 namespace Todododo.Views
 {
-    public class ToDosViewBase: ReactiveComponentBase<ToDosViewModel>
+    public class ToDosViewBase: ReactiveInjectableComponentBase<ToDosViewModel>
     {
         public ToDosViewBase()
         {
-            ViewModel = new ToDosViewModel();
+            
         }
 
         protected async Task Add()

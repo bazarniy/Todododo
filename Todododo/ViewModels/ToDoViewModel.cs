@@ -8,14 +8,25 @@ namespace Todododo.ViewModels
     public class ToDoViewModel : ReactiveObject
     {
         private readonly ToDo _instance;
+        private string _summary;
+        private bool _completed;
 
-        public string Summary => _instance.Summary;
-        public bool Completed { get; set; } 
+        public string Summary
+        {
+            get => _instance.Summary;
+            set => _instance.Summary = this.RaiseAndSetIfChanged(ref _summary, value);
+        }
+        public bool Completed
+        {
+            get => _instance.Completed;
+            set => _instance.Completed = this.RaiseAndSetIfChanged(ref _completed, value);
+        }
+
+        public ToDo Current() => _instance;
 
         public ToDoViewModel(ToDo instance = null)
         {
             _instance = instance ?? new ToDo();
-            Completed = _instance.Completed;
         }
     }
 }

@@ -35,7 +35,11 @@ namespace Todododo.Data
 
         public override async Task FlushAsync(System.Threading.CancellationToken cancellationToken) => await SaveOnStorage();
 
-        private async Task SaveOnStorage() => await _localStorage.SetItemAsync(_storageKey, _ms.ToArray());
+        private async Task SaveOnStorage() {
+            Console.WriteLine("ololo!");
+
+            await _localStorage.SetItemAsync(_storageKey, _ms.ToArray()); 
+    }
 
         public override int Read(byte[] buffer, int offset, int count) => _ms.Read(buffer, offset, count);
 
@@ -65,7 +69,7 @@ namespace Todododo.Data
         public static async Task<DbStream> DbStream(this ILocalStorageService localStorage)
         {
             var data = await localStorage.GetItemAsync<byte[]>(Storagekey);
-
+            Console.WriteLine("Bytes:" + data.Length);
             return new DbStream(localStorage, Storagekey, data);
         }
     }

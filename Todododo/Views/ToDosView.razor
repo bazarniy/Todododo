@@ -10,7 +10,8 @@
         {
         <TableRow>
             <TableRowCell><Check TValue="bool" @bind-Checked="@result.Completed">@result.Summary</Check></TableRowCell>
-</TableRow>
+            <TableRowCell><Button Clicked="@Add" Outline="true">Edit</Button></TableRowCell>
+        </TableRow>
         }
 </TableBody>
 </Table>
