@@ -1,66 +1,49 @@
 ﻿using System;
 using System.Collections.ObjectModel;
-using System.Linq;
 using System.Reactive;
+using System.Reactive.Disposables;
 using System.Reactive.Linq;
-using System.Threading.Tasks;
-using Blazored.LocalStorage;
 using DynamicData;
-using DynamicData.Binding;
-using LiteDB;
 using ReactiveUI;
 using Todododo.Data;
 
 namespace Todododo.ViewModels
 {
-    public class ToDosViewModel : ReactiveObject
+    public class ToDosViewModel : ReactiveObject, IDisposable
     {
-        public ReadOnlyObservableCollection<ToDoViewModel> Data { get; }
+        private readonly CompositeDisposable _cleanup = new CompositeDisposable();
+        private readonly ReadOnlyObservableCollection<ToDoViewModel> _data;
+
+        public ReadOnlyObservableCollection<ToDoViewModel> Data => _data;
 
         public ReactiveCommand<Unit, Unit> Add { get; }
+        public ReactiveCommand<ToDoViewModel, Unit> Remove { get; }
 
-        public ToDosViewModel(ILocalStorageService storage)
+        public ToDosViewModel(TodoService service)
         {
-            var collection = new ObservableCollection<ToDoViewModel>();
-            Data = new ReadOnlyObservableCollection<ToDoViewModel>(collection);
+            static bool DefaultPredicate(Node<ToDo, long> node) => node.IsRoot;
 
-            Observable
-                .StartAsync(async _ => await storage.DbStream())
-                .Subscribe(stream =>
+            service.Todos.Connect()
+                .TransformToTree(x => x.ParentId, Observable.Return((Func<Node<ToDo, long>, bool>)DefaultPredicate))
+                .Transform(node => new ToDoViewModel(node))
+                .Bind(out _data)
+                .DisposeMany()
+                .Subscribe()
+                .DisposeWith(_cleanup);
+
+            Add = ReactiveCommand
+                .CreateFromTask(() => service.AddOrUpdate(new ToDo { Summary = "Added todo" }))
+                .DisposeWith(_cleanup);
+
+            Remove = ReactiveCommand
+                .CreateFromTask<ToDoViewModel, Unit>(async x =>
                 {
-                    //не флашит в стрим, без диспоза. Наверное можно просто в жсон переделать, чтобы не трахаться
-                    using (var db = new LiteDatabase(stream))
-                    {
-                        collection.AddRange(db.GetCollection<ToDo>("todo").FindAll().Select(x => new ToDoViewModel(x)));
-                    }
-
-                    collection.ActOnEveryObject(
-                    x =>
-                    {
-
-                        using (var db = new LiteDatabase(stream))
-                        {
-                            db.GetCollection<ToDo>("todo").Insert(x.Current());
-                        }
-
-                        stream.Flush();
-                    },
-                    x =>
-                    {
-
-                    });
-                });
-            
-
-
-
-            /*collection.AddRange(new[]
-            {
-                new ToDoViewModel(new ToDo(){Summary="First todo"}),
-                new ToDoViewModel(new ToDo(){Summary="Second todo", Completed=true})
-            });*/
-
-            Add = ReactiveCommand.Create(() => collection.Add(new ToDoViewModel(new ToDo() { Summary = "Added todo" })));
+                    await service.Remove(x.Current());
+                    return Unit.Default;
+                })
+                .DisposeWith(_cleanup);
         }
+
+        public void Dispose() => _cleanup.Dispose();
     }
 }

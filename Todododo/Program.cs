@@ -8,6 +8,8 @@ using Blazored.LocalStorage;
 using Blazorise;
 using Blazorise.Material;
 using Blazorise.Icons.Material;
+using IdGen;
+using Todododo.Data;
 
 namespace Todododo
 {
@@ -29,6 +31,10 @@ namespace Todododo
             builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             builder.Services.AddSingleton<FetchDataViewModel>();
             builder.Services.AddTransient<ToDosViewModel>();
+            builder.Services.AddSingleton<IIdGenerator<long>>(x => new IdGenerator(0));
+
+            builder.Services.AddScoped<TodoService>();
+
 
             builder.Services.AddBlazoredLocalStorage();
 

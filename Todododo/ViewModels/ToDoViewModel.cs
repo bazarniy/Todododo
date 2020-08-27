@@ -1,5 +1,6 @@
 ﻿using System.Reactive;
 using System.Threading.Tasks;
+using DynamicData;
 using ReactiveUI;
 using Todododo.Data;
 
@@ -10,12 +11,14 @@ namespace Todododo.ViewModels
         private readonly ToDo _instance;
         private string _summary;
         private bool _completed;
+        private int _depth;
 
         public string Summary
         {
             get => _instance.Summary;
             set => _instance.Summary = this.RaiseAndSetIfChanged(ref _summary, value);
         }
+
         public bool Completed
         {
             get => _instance.Completed;
@@ -24,9 +27,10 @@ namespace Todododo.ViewModels
 
         public ToDo Current() => _instance;
 
-        public ToDoViewModel(ToDo instance = null)
+        public ToDoViewModel(Node<ToDo, long> node)
         {
-            _instance = instance ?? new ToDo();
+            _instance = node.Item;
+            _depth = node.Depth;
         }
     }
 }
