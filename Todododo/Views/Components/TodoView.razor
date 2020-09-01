@@ -1,0 +1,37 @@
+﻿@using Blazorise.Icons.Material
+@using ReactiveUI
+
+@inherits TodoViewBase;
+
+@if (!ViewModel.IsEdit)
+{
+<Row>
+    <Column ColumnSize="ColumnSize.Is10"><Check TValue="bool" @bind-Checked="ViewModel.Completed">@ViewModel.Summary</Check></Column>
+    <Column ColumnSize="ColumnSize.IsAuto.WithOffset">
+        <Button Color="Color.Link" Class="btn-icon" Command="ViewModel.Edit">
+            <Blazorise.Icons.Material.Icon Name="MaterialIcons.Create" />
+        </Button>
+        <Button Color="Color.Link" Class="btn-icon" Command="ViewModel.Remove">
+            <Blazorise.Icon Name="MaterialIcons.Remove" />
+        </Button>
+    </Column>
+</Row>
+}
+else
+{
+<Row>
+    <Column ColumnSize="ColumnSize.Is10">
+        <Card>
+            <CardBody>
+                <Field>
+                    <TextEdit Placeholder="Write what you want..." @bind-Text="ViewModel.Summary"/>
+                </Field>
+                <Button Color="Color.Primary" Command="ViewModel.Save" Disabled="@(!ViewModel.CanSave)">Save</Button>
+                <Button Color="Color.Light" Command="ViewModel.Cancel">Cancel</Button>
+            </CardBody>
+        </Card>
+    </Column>
+</Row>
+
+}
+

@@ -14,10 +14,6 @@ namespace Todododo.Views
 {
     public class ToDosViewBase: ReactiveInjectableComponentBase<ToDosViewModel>
     {
-        private readonly Subject<Unit> _add = new Subject<Unit>();
-        private readonly Subject<ToDoViewModel> _remove = new Subject<ToDoViewModel>();
-        private readonly Subject<ToDoViewModel> _edit = new Subject<ToDoViewModel>();
-
         public ToDosViewBase()
         {
             this.WhenActivated(disposable =>
@@ -26,21 +22,13 @@ namespace Todododo.Views
 
                 ViewModel!.Data
                     .ObserveCollectionChanges()
-                    .Subscribe(async _ => await InvokeAsync(StateHasChanged))
-                    .DisposeWith(disposable);
-
-                _add
-                    .InvokeCommand(ViewModel!.Add)
-                    .DisposeWith(disposable);
-
-                _remove
-                    .InvokeCommand(ViewModel.Remove)
+                    .Subscribe(async _ =>
+                    {
+                        Console.WriteLine("Redraw");
+                        await InvokeAsync(StateHasChanged);
+                    })
                     .DisposeWith(disposable);
             });
         }
-
-        protected void Add() => _add.OnNext(Unit.Default);
-        protected void Edit(ToDoViewModel x) => _edit.OnNext(x);
-        protected void Remove(ToDoViewModel x) => _remove.OnNext(x);
     }
 }

@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Blazored.LocalStorage;
@@ -34,18 +35,18 @@ namespace Todododo.Data
             await _localStorage.SetItemAsync(StorageName, _data.Items.ToArray());
         }
 
-        public async Task Remove(ToDo dto)
+        public async Task Remove(long id)
         {
-            if (dto.Id == default) return;
+            if (id == default) return;
 
-            _data.Remove(ItemsToRemove(dto.Id));
+            _data.Remove(ItemsToRemove(id));
 
             await _localStorage.SetItemAsync(StorageName, _data.Items.ToArray());
         }
 
         private async Task Load()
         {
-            var items = await _localStorage.GetItemAsync<List<ToDo>>(StorageName);
+            var items = await _localStorage.GetItemAsync<IEnumerable<ToDo>>(StorageName);
             _data.AddOrUpdate(items);
         }
 
