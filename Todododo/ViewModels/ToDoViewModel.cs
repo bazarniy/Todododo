@@ -4,9 +4,9 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using AutoMapper;
 using DynamicData;
 using DynamicData.Binding;
-using Newtonsoft.Json;
 using ReactiveUI;
 using Todododo.Data;
 using Todododo.Helpers;
@@ -17,31 +17,24 @@ namespace Todododo.ViewModels
     {
         private readonly ObservableAsPropertyHelper<bool> _canSave;
         private readonly ObservableAsPropertyHelper<bool> _isEdit;
+
         private string _summary;
         private bool _completed;
         private int _depth;
 
-        private ToDo _instance;
-        private ToDo _unchangedTodo;
+        public long Id { get; private set; }
+        public long ParentId { get; private set; }
 
         public string Summary
         {
             get => _summary;
-            set
-            {
-                _instance.Summary = value;
-                this.RaiseAndSetIfChanged(ref _summary, value);
-            }
+            set => this.RaiseAndSetIfChanged(ref _summary, value);
         }
 
         public bool Completed
         {
             get => _completed;
-            set
-            {
-                _instance.Completed = value;
-                this.RaiseAndSetIfChanged(ref _completed, value);
-            }
+            set => this.RaiseAndSetIfChanged(ref _completed, value);
         }
 
         public bool IsEdit => _isEdit.Value;
@@ -53,34 +46,23 @@ namespace Todododo.ViewModels
         public ReactiveCommand<Unit, Unit> Remove { get; }
         public ReactiveCommand<Unit, Unit> Cancel { get; }
 
-        public ToDoViewModel(Node<ToDo, long> node, TodoService service)
+        public ToDoViewModel(Node<ToDo, long> node, TodoService service, IMapper mapper)
         {
-            _instance = node.Item;
-            _unchangedTodo = _instance.DeepClone();
             _depth = node.Depth;
 
-            Summary = _instance.Summary;
-            Completed = _instance.Completed;
+            mapper.Map(node.Item, this);
 
-            Edit = ReactiveCommand.Create(
-                () => { _unchangedTodo = _instance.DeepClone(); }
-            );
+            var unchangedTodo = mapper.Map<ToDo>(this);
+
+            Edit = ReactiveCommand.Create(() => { unchangedTodo = mapper.Map<ToDo>(this); });
+            Cancel = ReactiveCommand.Create(() => { mapper.Map(unchangedTodo, this); });
 
             Save = ReactiveCommand.CreateFromTask(
-                async () => await service.AddOrUpdate(_instance),
+                async () => await service.AddOrUpdate(mapper.Map<ToDo>(this)),
                 this.WhenAnyValue(x => x.Summary).Select(x => !string.IsNullOrWhiteSpace(x))
             );
 
-            Cancel = ReactiveCommand.Create(() =>
-            {
-                _instance = _unchangedTodo;
-                Summary = _instance.Summary;
-                Completed = _instance.Completed;
-            });
-
-            Remove = ReactiveCommand.CreateFromTask(
-                async x => await service.Remove(node.Key)
-            );
+            Remove = ReactiveCommand.CreateFromTask(async x => await service.Remove(node.Key));
 
             Save
                 .CanExecute
@@ -101,8 +83,6 @@ namespace Todododo.ViewModels
             this.WhenAnyPropertyChanged(nameof(Completed)) //this.WhenAnyValue(vm => vm.Completed) there are "RuntimeError: memory access out of bounds" in the browser
                 .Select(_ => Unit.Default)
                 .InvokeCommand(Save);
-
-            
         }
     }
 }

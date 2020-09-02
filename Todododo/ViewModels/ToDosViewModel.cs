@@ -2,9 +2,7 @@
 using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Disposables;
-using System.Reactive.Linq;
 using DynamicData;
-using DynamicData.Binding;
 using ReactiveUI;
 using Todododo.Data;
 
@@ -19,13 +17,13 @@ namespace Todododo.ViewModels
 
         public ReactiveCommand<Unit, Unit> Add { get; }
 
-        public ToDosViewModel(TodoService service)
+        public ToDosViewModel(Func<Node<ToDo, long>, ToDoViewModel> createViewModel, TodoService service)
         {
             //static bool DefaultPredicate(Node<ToDo, long> node) => node.IsRoot;
 
             service.Todos.Connect()
                 .TransformToTree(x => x.ParentId/*, Observable.Return((Func<Node<ToDo, long>, bool>) DefaultPredicate)*/)
-                .Transform(node => new ToDoViewModel(node, service))
+                .Transform(createViewModel)
                 .Bind(out _data)
                 .Subscribe()
                 .DisposeWith(_cleanup);

@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="10.0.0" />
     <PackageReference Include="Blazored.LocalStorage" Version="3.0.0" />
     <PackageReference Include="Blazorise.Icons.Material" Version="0.9.1.2" />
     <PackageReference Include="Blazorise.Material" Version="0.9.1.2" />
