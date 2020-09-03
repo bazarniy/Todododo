@@ -22,11 +22,7 @@ namespace Todododo.Views
 
                 ViewModel!.Data
                     .ObserveCollectionChanges()
-                    .Subscribe(async _ =>
-                    {
-                        Console.WriteLine("Redraw");
-                        await InvokeAsync(StateHasChanged);
-                    })
+                    .Subscribe(async _ => await InvokeAsync(StateHasChanged))
                     .DisposeWith(disposable);
             });
         }
