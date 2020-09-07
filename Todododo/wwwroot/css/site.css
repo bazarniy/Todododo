@@ -178,3 +178,8 @@ app {
         display: block;
     }
 }
+
+.can-drop {
+    background-color: var(--light);
+    min-height: 3rem !important;
+}

@@ -30,6 +30,7 @@ namespace Todododo.Data
         {
             if (dto.Id == default) dto.Id = _idGen.CreateId();
 
+            Console.WriteLine($"AddOrUpdate id {dto.Id} parentId {dto.ParentId} summary {dto.Summary}");
             _data.AddOrUpdate(dto);
 
             await _localStorage.SetItemAsync(StorageName, _data.Items.ToArray());

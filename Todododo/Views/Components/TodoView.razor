@@ -3,9 +3,28 @@
 
 @inherits TodoViewBase;
 
-<Row Margin="Indent">
-    @if (!ViewModel.IsEdit)
-    {
+
+@if (!ViewModel.IsEdit)
+{
+    <Row Margin="Indent" 
+         Style="min-height: 0.25rem;" 
+         Class="@DropBeforeClass"
+         
+         @ondrop="@(OnDropBefore)"
+         @ondragenter="@(OnDragBeforeEnter)"
+         @ondragleave="@(OnDragBeforeLeave)"
+         ondragover="event.preventDefault();"
+    />
+    
+    <Row Margin="Indent"
+         Class="@DropClass"
+
+         @ondrop="@(OnDrop)"
+         @ondragstart="@(OnDragStart)"
+         @ondragenter="@(OnDragEnter)"
+         @ondragleave="@(OnDragLeave)"
+         ondragover="event.preventDefault();"
+         draggable="true">
         <Column ColumnSize="ColumnSize.Is10" Class="d-flex align-items-center">
             <Button Color="Color.Link" Class="btn-icon" Command="ViewModel.Expand" Disabled="@(!ViewModel.CanExpand)">
                 <Blazorise.Icons.Material.Icon Name="@(ViewModel.IsExpanded ? MaterialIcons.KeyboardArrowDown : MaterialIcons.KeyboardArrowRight)" />
@@ -20,9 +39,21 @@
                 <Blazorise.Icon Name="MaterialIcons.Remove" />
             </Button>
         </Column>
-    }
-    else
-    {
+    </Row>
+    <Row Margin="Indent" 
+         Style="min-height: 0.25rem;" 
+         Class="@DropNextClass"
+         
+         @ondrop="@(OnDropNext)"
+         @ondragenter="@(OnDragNextEnter)"
+         @ondragleave="@(OnDragNextLeave)"
+         ondragover="event.preventDefault();"
+    />
+    
+}
+else
+{
+    <Row Margin="Indent">
         <Column ColumnSize="ColumnSize.Is10">
             <Card>
                 <CardBody>
@@ -34,13 +65,14 @@
                 </CardBody>
             </Card>
         </Column>
-    }
-</Row>
+    </Row>
+}
+
 
 @if (ViewModel.IsExpanded)
 {
     foreach (var result in ViewModel.Children)
     {
-        <TodoView ViewModel="@result"/>
+        <TodoView ViewModel="@result" />
     }
 }

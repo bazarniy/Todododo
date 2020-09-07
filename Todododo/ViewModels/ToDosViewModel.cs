@@ -4,6 +4,7 @@ using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using DynamicData;
+using DynamicData.Binding;
 using ReactiveUI;
 using Todododo.Data;
 
@@ -14,7 +15,9 @@ namespace Todododo.ViewModels
         private readonly CompositeDisposable _cleanup = new CompositeDisposable();
         private readonly ReadOnlyObservableCollection<ToDoViewModel> _data;
 
-        public ReadOnlyObservableCollection<ToDoViewModel> Data => _data;
+        //public ReadOnlyObservableCollection<ToDoViewModel> Data => _data;
+
+        public IObservableCollection<ToDoViewModel> Data { get; } = new ObservableCollectionExtended<ToDoViewModel>();
 
         public ReactiveCommand<Unit, Unit> Add { get; }
 
@@ -25,7 +28,8 @@ namespace Todododo.ViewModels
             service.Todos.Connect()
                 .TransformToTree(x => x.ParentId/*, Observable.Return((Func<Node<ToDo, long>, bool>) DefaultPredicate)*/)
                 .Transform(createViewModel)
-                .Bind(out _data)
+                //.Bind(out _data)
+                .Bind(Data)
                 .DisposeMany()
                 .Subscribe()
                 .DisposeWith(_cleanup);

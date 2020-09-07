@@ -3,6 +3,7 @@ using System.Collections.ObjectModel;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
@@ -16,6 +17,13 @@ namespace Todododo.ViewModels
 {
     public class ToDoViewModel : ReactiveObject, IDisposable
     {
+        public enum DropState
+        {
+            Before,
+            Here,
+            After
+        }
+
         private readonly IDisposable _cleanup;
         private readonly ObservableAsPropertyHelper<bool> _canSave;
         private readonly ObservableAsPropertyHelper<bool> _isEdit;
@@ -26,8 +34,6 @@ namespace Todododo.ViewModels
         private ReadOnlyObservableCollection<ToDoViewModel> _children;
         private bool _isExpanded;
 
-        public long Id { get; private set; }
-        public long ParentId { get; private set; }
         public int Depth { get; private set; }
 
         public string Summary
@@ -62,35 +68,27 @@ namespace Todododo.ViewModels
         public ReactiveCommand<Unit, Unit> Remove { get; }
         public ReactiveCommand<Unit, Unit> Cancel { get; }
 
-        public ToDoViewModel(Node<ToDo, long> node, TodoService service, IMapper mapper, ToDoViewModel parent = null)
+        public ReactiveCommand<(DropState, ToDoViewModel), Unit> Drop { get; }
+
+        //todo: подумать над фабрикой в конструкторе
+        public ToDoViewModel(Node<ToDo, long> node, TodoService service, IMapper mapper)
         {
             Depth = node.Depth;
 
             var childrenLoader = new Lazy<IDisposable>(() =>
                 node.Children.Connect()
-                    .Transform(e => new ToDoViewModel(e, service, mapper, this))
+                    .Transform(e => new ToDoViewModel(e, service, mapper))
                     .Bind(out _children)
                     .DisposeMany()
                     .Subscribe()
             );
 
-            /*var shouldExpand = node.IsRoot || IsExpanded
-                ? Observable.Return(true)
-                : parent.WhenValueChanged(x => x.IsExpanded);*/
-
             var expander = this.WhenValueChanged(x=>x.IsExpanded)
                 .Where(isExpanded => isExpanded)
                 .Take(1)
-                .Subscribe(_ =>
-                {
-                    //force lazy loading
-                    var x = childrenLoader.Value;
-                });
+                .Subscribe(_ => { var x = childrenLoader.Value; }); //force lazy loading
 
-            Console.WriteLine(Summary + " IsExpanded: " + IsExpanded);
             mapper.Map(node.Item, this);
-            Console.WriteLine(Summary + " IsExpanded: " + IsExpanded);
-
 
             Expand = ReactiveCommand.Create(
                 () => { IsExpanded = !IsExpanded; },
@@ -111,6 +109,21 @@ namespace Todododo.ViewModels
             );
 
             Remove = ReactiveCommand.CreateFromTask(async x => await service.Remove(node.Key));
+
+            Drop = ReactiveCommand.CreateFromTask<(DropState, ToDoViewModel), Unit>(async (x, _) =>
+            {
+                var (dropstate, vm) = x;
+                if (vm == null || vm == this) return Unit.Default;
+
+                var item = mapper.Map<ToDo>(vm);
+
+                item.ParentId = dropstate == DropState.Here
+                    ? node.Key
+                    : node.Parent.HasValue ? node.Parent.Value.Key : 0;
+                await service.AddOrUpdate(item);
+
+                return Unit.Default;
+            });
 
             Save
                 .CanExecute
