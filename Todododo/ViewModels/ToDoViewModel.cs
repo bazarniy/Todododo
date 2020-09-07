@@ -34,7 +34,14 @@ namespace Todododo.ViewModels
         private ReadOnlyObservableCollection<ToDoViewModel> _children;
         private bool _isExpanded;
 
-        public int Depth { get; private set; }
+        // ReSharper disable once UnusedMember.Global
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        public long Id { get; private set; } 
+        // ReSharper disable once UnusedMember.Global
+        // ReSharper disable once UnusedAutoPropertyAccessor.Local
+        public long ParentId { get; private set; }
+
+        public int Depth { get; }
 
         public string Summary
         {
