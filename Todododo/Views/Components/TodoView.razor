@@ -17,21 +17,28 @@
     />
     
     <Row Margin="Indent"
-         Class="@DropClass"
-
+         Class="@(DropClass + (RowHover?" hover":""))"
          @ondrop="@(OnDrop)"
          @ondragstart="@(OnDragStart)"
          @ondragenter="@(OnDragEnter)"
          @ondragleave="@(OnDragLeave)"
+         draggable="@(Draggable.ToString())"
          ondragover="event.preventDefault();"
-         draggable="true">
-        <Column ColumnSize="ColumnSize.Is10" Class="d-flex align-items-center">
-            <Button Color="Color.Link" Class="btn-icon" Command="ViewModel.Expand" Disabled="@(!ViewModel.CanExpand)">
-                <Blazorise.Icons.Material.Icon Name="@(ViewModel.IsExpanded ? MaterialIcons.KeyboardArrowDown : MaterialIcons.KeyboardArrowRight)" />
-            </Button>
+         @onmouseover="@(() => { RowHover = true; })"
+         @onmouseout="@(() => { RowHover = false; })">
+        <Column ColumnSize="ColumnSize.Is1" Class="d-flex align-items-center justify-content-end" Style="max-width: 3%;">
+            <Blazorise.Icons.Material.Icon Name="MaterialIcons.Reorder" Class="move-bar" @onmouseover="@(() => { Draggable = true; })" @onmouseout="@(() => { Draggable = false; })" />
+            @if (ViewModel.CanExpand)
+            {
+                <Button Color="Color.Link" Class="btn-icon" Command="ViewModel.Expand">
+                    <Blazorise.Icons.Material.Icon Name="@(ViewModel.IsExpanded ? MaterialIcons.KeyboardArrowDown : MaterialIcons.KeyboardArrowRight)" />
+                </Button>
+            }
+        </Column>
+        <Column ColumnSize="ColumnSize.Is5" Class="d-flex align-items-center">
             <Check TValue="bool" @bind-Checked="ViewModel.Completed">@ViewModel.Summary</Check>
         </Column>
-        <Column ColumnSize="ColumnSize.IsAuto.WithOffset">
+        <Column ColumnSize="ColumnSize.IsAuto.WithOffset" Class="todo-panel">
             <Button Color="Color.Link" Class="btn-icon" Command="ViewModel.Edit">
                 <Blazorise.Icons.Material.Icon Name="MaterialIcons.Create" />
             </Button>
@@ -75,4 +82,10 @@ else
     {
         <TodoView ViewModel="@result" />
     }
+}
+
+@code
+{
+    private bool Draggable { get; set; }
+    private bool RowHover { get; set; }
 }
