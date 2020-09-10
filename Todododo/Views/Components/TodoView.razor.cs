@@ -28,6 +28,12 @@ namespace Todododo.Views
         protected string DropNextClass { get; set; }
         protected string DropBeforeClass { get; set; }
 
+        protected bool IsCompleted
+        {
+            get => ViewModel?.Completed ?? false;
+            set => ViewModel?.Complete.Execute();
+        }
+
         protected IFluentSpacingOnBreakpointWithSideAndSize Indent => ViewModel.Depth switch
         {
             0 => Margin.Is0.FromLeft,

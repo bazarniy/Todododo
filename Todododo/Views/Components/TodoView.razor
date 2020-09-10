@@ -36,7 +36,7 @@
             }
         </Column>
         <Column ColumnSize="ColumnSize.Is5" Class="d-flex align-items-center">
-            <Check TValue="bool" @bind-Checked="ViewModel.Completed">@ViewModel.Summary</Check>
+            <Check TValue="bool" @bind-Checked="IsCompleted" >@ViewModel.Summary</Check>
         </Column>
         <Column ColumnSize="ColumnSize.IsAuto.WithOffset" Class="todo-panel">
             <Button Color="Color.Link" Class="btn-icon" Command="ViewModel.Edit">

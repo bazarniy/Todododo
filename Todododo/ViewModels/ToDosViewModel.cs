@@ -15,21 +15,17 @@ namespace Todododo.ViewModels
         private readonly CompositeDisposable _cleanup = new CompositeDisposable();
         private readonly ReadOnlyObservableCollection<ToDoViewModel> _data;
 
-        //public ReadOnlyObservableCollection<ToDoViewModel> Data => _data;
-
-        public IObservableCollection<ToDoViewModel> Data { get; } = new ObservableCollectionExtended<ToDoViewModel>();
+        public ReadOnlyObservableCollection<ToDoViewModel> Data => _data;
 
         public ReactiveCommand<Unit, Unit> Add { get; }
 
         public ToDosViewModel(Func<Node<ToDo, long>, ToDoViewModel> createViewModel, TodoService service)
         {
-            static bool DefaultPredicate(Node<ToDo, long> node) => node.IsRoot;
-
             service.Todos.Connect()
-                .TransformToTree(x => x.ParentId/*, Observable.Return((Func<Node<ToDo, long>, bool>) DefaultPredicate)*/)
+                .TransformToTree(x => x.ParentId)
+                .Filter(x => !x.Item.Completed)
                 .Transform(createViewModel)
-                //.Bind(out _data)
-                .Bind(Data)
+                .Bind(out _data)
                 .DisposeMany()
                 .Subscribe()
                 .DisposeWith(_cleanup);

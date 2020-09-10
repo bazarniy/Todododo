@@ -36,11 +36,28 @@ namespace Todododo.Data
             await _localStorage.SetItemAsync(StorageName, _data.Items.ToArray());
         }
 
+        public async Task Complete(long id)
+        {
+            //todo: вот это должно удалять элементы из основного хранилища и выкидывать в отдельное
+            var ids = FlattenThisAndChildren(id).ToArray();
+            var items = _data.Items
+                .Where(x => !x.Completed && ids.Contains(x.Id))
+                .Select(x =>
+                {
+                    x.Completed = true;
+                    return x;
+                });
+
+            _data.AddOrUpdate(items);
+
+            await _localStorage.SetItemAsync(StorageName, _data.Items.ToArray());
+        }
+
         public async Task Remove(long id)
         {
             if (id == default) return;
 
-            _data.Remove(ItemsToRemove(id));
+            _data.Remove(FlattenThisAndChildren(id));
 
             await _localStorage.SetItemAsync(StorageName, _data.Items.ToArray());
         }
@@ -51,9 +68,9 @@ namespace Todododo.Data
             _data.AddOrUpdate(items);
         }
 
-        private IEnumerable<long> ItemsToRemove(long id) => _data.Items
+        private IEnumerable<long> FlattenThisAndChildren(long id) => _data.Items
             .Where(x => x.ParentId == id)
-            .SelectMany(x => ItemsToRemove(x.Id))
+            .SelectMany(x => FlattenThisAndChildren(x.Id))
             .Concat(new[] {id});
     }
 }

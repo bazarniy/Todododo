@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.Linq;
 using System.Reactive;
 using System.Reactive.Disposables;
 using System.Reactive.Linq;
@@ -30,7 +32,6 @@ namespace Todododo.ViewModels
         private readonly ObservableAsPropertyHelper<bool> _canExpand;
 
         private string _summary;
-        private bool _completed;
         private ReadOnlyObservableCollection<ToDoViewModel> _children;
         private bool _isExpanded;
 
@@ -41,18 +42,14 @@ namespace Todododo.ViewModels
         // ReSharper disable once UnusedAutoPropertyAccessor.Local
         public long ParentId { get; private set; }
 
+        public bool Completed { get; private set; }
+
         public int Depth { get; }
 
         public string Summary
         {
             get => _summary;
             set => this.RaiseAndSetIfChanged(ref _summary, value);
-        }
-
-        public bool Completed
-        {
-            get => _completed;
-            set => this.RaiseAndSetIfChanged(ref _completed, value);
         }
 
         public bool IsExpanded
@@ -72,12 +69,12 @@ namespace Todododo.ViewModels
         public ReactiveCommand<Unit, Unit> Expand { get; }
         public ReactiveCommand<Unit, Unit> Edit { get; }
         public ReactiveCommand<Unit, Unit> Save { get; }
+        public ReactiveCommand<Unit, Unit> Complete { get; }
         public ReactiveCommand<Unit, Unit> Remove { get; }
         public ReactiveCommand<Unit, Unit> Cancel { get; }
 
         public ReactiveCommand<(DropState, ToDoViewModel), Unit> Drop { get; }
 
-        //todo: подумать над фабрикой в конструкторе
         public ToDoViewModel(Node<ToDo, long> node, TodoService service, IMapper mapper)
         {
             Depth = node.Depth;
@@ -115,6 +112,8 @@ namespace Todododo.ViewModels
                 this.WhenAnyValue(x => x.Summary).Select(x => !string.IsNullOrWhiteSpace(x))
             );
 
+            Complete = ReactiveCommand.CreateFromTask(async () => await service.Complete(node.Key));
+
             Remove = ReactiveCommand.CreateFromTask(async x => await service.Remove(node.Key));
 
             Drop = ReactiveCommand.CreateFromTask<(DropState, ToDoViewModel), Unit>(async (x, _) =>
@@ -147,10 +146,6 @@ namespace Todododo.ViewModels
                 .InvokeCommand(Remove);
 
             isEdit.ToProperty(this, x => x.IsEdit, out _isEdit, string.IsNullOrWhiteSpace(Summary));
-
-            this.WhenAnyPropertyChanged(nameof(Completed)) //this.WhenAnyValue(vm => vm.Completed) there are "RuntimeError: memory access out of bounds" in the browser
-                .Select(_ => Unit.Default)
-                .InvokeCommand(Save);
 
             _cleanup = Disposable.Create(() =>
             {
