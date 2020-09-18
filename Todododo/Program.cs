@@ -34,10 +34,12 @@ namespace Todododo
             builder.Services.AddTransient(sp => new HttpClient { BaseAddress = new Uri(builder.HostEnvironment.BaseAddress) });
             builder.Services.AddSingleton<FetchDataViewModel>();
             builder.Services.AddSingleton<IIdGenerator<long>>(_ => new IdGenerator(0));
-            builder.Services.AddScoped<Func<Node<ToDo, long>, ToDoViewModel>>(c => node => new ToDoViewModel(node, c.GetRequiredService<TodoService>(), c.GetRequiredService<IMapper>()));
+            builder.Services.AddScoped<Func<Node<ToDo, long>, ToDoViewModel>>(c => node => new ToDoViewModel(node, c.GetRequiredService<TodoServiceFacade>(), c.GetRequiredService<IMapper>()));
             builder.Services.AddTransient<ToDosViewModel>();
 
             builder.Services.AddScoped<TodoService>();
+            builder.Services.AddScoped<TodoSortingService>();
+            builder.Services.AddScoped<TodoServiceFacade>();
             builder.Services.AddScoped<DragAndDropContainer>();
             
             builder.Services.AddBlazoredLocalStorage();

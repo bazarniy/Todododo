@@ -75,12 +75,16 @@ namespace Todododo.ViewModels
 
         public ReactiveCommand<(DropState, ToDoViewModel), Unit> Drop { get; }
 
-        public ToDoViewModel(Node<ToDo, long> node, TodoService service, IMapper mapper)
+        public ToDoViewModel(Node<ToDo, long> node, TodoServiceFacade service, IMapper mapper)
         {
             Depth = node.Depth;
 
             var childrenLoader = new Lazy<IDisposable>(() =>
                 node.Children.Connect()
+                    .Sort(
+                        SortExpressionComparer<Node<ToDo, long>>.Ascending(p => service.GetSort(p.Key)),
+                        service.SortingChanged
+                    )
                     .Transform(e => new ToDoViewModel(e, service, mapper))
                     .Bind(out _children)
                     .DisposeMany()
@@ -108,7 +112,7 @@ namespace Todododo.ViewModels
             Cancel = ReactiveCommand.Create(() => { mapper.Map(unchangedTodo, this); });
 
             Save = ReactiveCommand.CreateFromTask(
-                async () => await service.AddOrUpdate(mapper.Map<ToDo>(this)),
+                async () => { await service.AddOrUpdate(mapper.Map<ToDo>(this)); },
                 this.WhenAnyValue(x => x.Summary).Select(x => !string.IsNullOrWhiteSpace(x))
             );
 
@@ -122,11 +126,25 @@ namespace Todododo.ViewModels
                 if (vm == null || vm == this) return Unit.Default;
 
                 var item = mapper.Map<ToDo>(vm);
-
+                
                 item.ParentId = dropstate == DropState.Here
                     ? node.Key
                     : node.Parent.HasValue ? node.Parent.Value.Key : 0;
-                await service.AddOrUpdate(item);
+
+                switch (dropstate)
+                {
+                    case DropState.Here:
+                        await service.AddOrUpdate(item, node.Children.Count);
+                        break;
+                    case DropState.After:
+                        await service.AddOrUpdateAfter(item, node.Key);
+                        break;
+                    case DropState.Before:
+                        await service.AddOrUpdateBefore(item, node.Key);
+                        break;
+                    default:
+                        throw new ArgumentOutOfRangeException();
+                }
 
                 return Unit.Default;
             });

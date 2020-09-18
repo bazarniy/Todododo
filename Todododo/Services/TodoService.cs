@@ -20,20 +20,20 @@ namespace Todododo.Data
         {
             _idGen = idGen;
             _localStorage = localStorage;
-
-            Task.Run(Load);
         }
 
         public IObservableCache<ToDo, long> Todos => _data.AsObservableCache();
 
-        public async Task AddOrUpdate(ToDo dto)
+        public async Task<long> AddOrUpdate(ToDo dto)
         {
             if (dto.Id == default) dto.Id = _idGen.CreateId();
 
             Console.WriteLine($"AddOrUpdate id {dto.Id} parentId {dto.ParentId} summary {dto.Summary}");
-            _data.AddOrUpdate(dto);
+            _data.AddOrUpdate(dto, ToDo.ToDoComparer);
 
-            await _localStorage.SetItemAsync(StorageName, _data.Items.ToArray());
+            await SaveLocalStorage();
+
+            return dto.Id;
         }
 
         public async Task Complete(long id)
@@ -50,7 +50,7 @@ namespace Todododo.Data
 
             _data.AddOrUpdate(items);
 
-            await _localStorage.SetItemAsync(StorageName, _data.Items.ToArray());
+            await SaveLocalStorage();
         }
 
         public async Task Remove(long id)
@@ -59,18 +59,39 @@ namespace Todododo.Data
 
             _data.Remove(FlattenThisAndChildren(id));
 
-            await _localStorage.SetItemAsync(StorageName, _data.Items.ToArray());
-        }
-
-        private async Task Load()
-        {
-            var items = await _localStorage.GetItemAsync<IEnumerable<ToDo>>(StorageName);
-            _data.AddOrUpdate(items);
+            await SaveLocalStorage();
         }
 
         private IEnumerable<long> FlattenThisAndChildren(long id) => _data.Items
             .Where(x => x.ParentId == id)
             .SelectMany(x => FlattenThisAndChildren(x.Id))
             .Concat(new[] {id});
+
+        public async Task Initialize()
+        {
+            try
+            {
+                var items = await _localStorage.GetItemAsync<IEnumerable<ToDo>>(StorageName);
+                _data.AddOrUpdate(items);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error initializing localstorage {StorageName}");
+                Console.WriteLine(e);
+            }
+        }
+
+        private async Task SaveLocalStorage()
+        {
+            try
+            {
+                await _localStorage.SetItemAsync(StorageName, _data.Items.ToArray());
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Error saving localstorage {StorageName}");
+                Console.WriteLine(e);
+            }
+        }
     }
 }
